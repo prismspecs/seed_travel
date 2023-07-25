@@ -98,11 +98,21 @@ class Script(scripts.Script):
     def run(self, p, rnd_seed, seed_count, dest_seed, steps, curve, curvestr, loopback, video_fps,
             show_images, compare_paths, allowdefsampler, bump_seed, lead_inout, upscale_meth, upscale_ratio,
             use_cache, ssim_diff, ssim_ccrop, substep_min, ssim_diff_min, rife_passes, rife_drop, save_stats):
+
+        # Print names, values, and types of input parameters
+        parameters = locals()
+        for name, value in parameters.items():
+            parameter_type = type(value).__name__
+            print(f"Parameter Name: {name}, Value: {value}, Type: {parameter_type}")
+
+
         initial_info = None
         images = []
         lead_inout=int(lead_inout)
+        upscale_ratio_value = float(upscale_ratio)
+
         if upscale_meth != 'None' and upscale_ratio != 1.0 and upscale_ratio != 0.0:
-            tgt_w, tgt_h = round(p.width * upscale_ratio), round(p.height * upscale_ratio)
+            tgt_w, tgt_h = round(p.width * upscale_ratio_value), round(p.height * upscale_ratio_value)
         else:
             tgt_w, tgt_h = p.width, p.height
         video_fps = 0 if video_fps == None else video_fps
@@ -115,7 +125,8 @@ class Script(scripts.Script):
                 return seed
 
         # If we are just bumping seeds, ignore compare_paths and save_video
-        if bump_seed > 0:
+        bump_seed_int = int(bump_seed) # fix
+        if bump_seed_int > 0:
             compare_paths = False
             save_video = False
             steps = 1
@@ -125,6 +136,7 @@ class Script(scripts.Script):
             print(f"You seem to be using Euler a, it will most likely not produce good results.")
             return Processed(p, images, p.seed)
 
+        seed_count = int(float(seed_count)) if isinstance(seed_count, str) else int(seed_count)
         if rnd_seed and (not seed_count or int(seed_count) < 2):
             print(f"You need at least 2 random seeds.")
             return Processed(p, images, p.seed)
@@ -174,6 +186,7 @@ class Script(scripts.Script):
             seeds = seeds + [st_fixseed(int(x.strip())) for x in dest_seed.split(",")]
         p.seed = seeds[0]
 
+        bump_seed = int(bump_seed) # fix
         if bump_seed > 0:
             p.subseed_strength = bump_seed
             for s in range(len(seeds)-1):
@@ -208,6 +221,7 @@ class Script(scripts.Script):
                 else:
                     travel[0] = p.subseed
                 seed, subseed = p.seed, p.subseed
+                steps = float(steps) # fix
                 numsteps = int(steps) + (1 if s+1 == len(travel) else 0)
                 for i in range(numsteps):
                     strength = float(i/float(steps))
