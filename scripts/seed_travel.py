@@ -313,6 +313,7 @@ class Script(scripts.Script):
                     image_cache[cache_key] = image
 
             # If SSIM > 0 and not bump_seed
+            ssim_diff = int(ssim_diff) # fix
             if ssim_diff > 0:
                 ssim = StructuralSimilarityIndexMeasure(data_range=1.0)
                 if ssim_ccrop == 0:
@@ -411,9 +412,13 @@ class Script(scripts.Script):
             if save_video:
                 try:
                     frames = [np.asarray(step_images[0])] * lead_inout + [np.asarray(t) for t in step_images] + [np.asarray(step_images[-1])] * lead_inout
+                    
+                    video_fps = int(float(video_fps)) # fix
                     fps = video_fps if video_fps > 0 else len(frames) / abs(video_fps)
+
                     filename = f"travel-{travel_number:05}-{s:04}.mp4" if compare_paths else f"travel-{travel_number:05}.mp4"
-                    writer = imageio.get_writer(os.path.join(travel_path, filename), fps=fps, quality=8)
+
+                    writer = imageio.get_writer(os.path.join(travel_path, filename), fps=fps, quality=10)
                     for frame in frames:
                         writer.append_data(frame)
                     writer.close()
@@ -475,7 +480,7 @@ class Script(scripts.Script):
                 D.extend(['Lead in/out: ', str(int(lead_inout)), '\n'])
                 D.extend(['SSIM threshold: ', str(ssim_diff), '\n'])
                 D.extend(['SSIM CenterCrop%: ', str(ssim_ccrop), '\n'])
-                D.extend(['RIFE passes: ', str(int(rife_passes)), '\n'])
+                D.extend(['RIFE passes: ', str(int(float(rife_passes))), '\n'])
                 D.extend(['Drop original frames: ', str(rife_drop), '\n'])
                 D.extend(['Interpolation curve: ', curve, '\n'])
                 D.extend(['Curve strength: ', str(curvestr), '\n'])
@@ -542,7 +547,7 @@ class Script(scripts.Script):
     
                 rife_images = step_images
     
-                for i in range(int(rife_passes)):
+                for i in range(int(float(rife_passes))):
                     print(f"RIFE pass {i+1}")
                     if rifemodel is None:
                         rifeload()
@@ -577,7 +582,7 @@ class Script(scripts.Script):
                     frames = [np.asarray(rife_images[0])] * lead_inout + [np.asarray(t) for t in rife_images] + [np.asarray(rife_images[-1])] * lead_inout
                     fps = video_fps if video_fps > 0 else len(frames) / abs(video_fps)
                     filename = f"travel-rife-{travel_number:05}.mp4"
-                    writer = imageio.get_writer(os.path.join(travel_path, filename), fps=fps, quality=8)
+                    writer = imageio.get_writer(os.path.join(travel_path, filename), fps=fps, quality=10)
                     for frame in frames:
                         writer.append_data(frame)
                     writer.close()
