@@ -1,3 +1,6 @@
+fixed to be API request compliant (but not integrated with standards, just working)
+
+
 # Seed Travel
 Small script for AUTOMATIC1111/stable-diffusion-webui to create images that exists between seeds.
 
