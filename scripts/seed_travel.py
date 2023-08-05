@@ -74,9 +74,12 @@ class Script(scripts.Script):
             ssim_diff_min = gr.Slider(label='SSIM min threshold', value=75, minimum=0, maximum=100, step=1)
             save_stats = gr.Checkbox(label='Save extra status information', value=True)
 
+            custom_path = gr.Textbox(label='Custom destination path', lines=1)
+            custom_filename = gr.Textbox(label='Custom filename', lines=1)
+
         return [rnd_seed, seed_count, dest_seed, steps, curve, curvestr, loopback, video_fps,
                 show_images, compare_paths, allowdefsampler, bump_seed, lead_inout, upscale_meth, upscale_ratio,
-                use_cache, ssim_diff, ssim_ccrop, substep_min, ssim_diff_min, rife_passes, rife_drop, save_stats]
+                use_cache, ssim_diff, ssim_ccrop, substep_min, ssim_diff_min, rife_passes, rife_drop, save_stats, custom_path, custom_filename]
 
     def get_next_sequence_number(path):
         from pathlib import Path
@@ -97,13 +100,13 @@ class Script(scripts.Script):
 
     def run(self, p, rnd_seed, seed_count, dest_seed, steps, curve, curvestr, loopback, video_fps,
             show_images, compare_paths, allowdefsampler, bump_seed, lead_inout, upscale_meth, upscale_ratio,
-            use_cache, ssim_diff, ssim_ccrop, substep_min, ssim_diff_min, rife_passes, rife_drop, save_stats):
+            use_cache, ssim_diff, ssim_ccrop, substep_min, ssim_diff_min, rife_passes, rife_drop, save_stats, custom_path, custom_filename):
 
         # Print names, values, and types of input parameters
-        parameters = locals()
-        for name, value in parameters.items():
-            parameter_type = type(value).__name__
-            print(f"Parameter Name: {name}, Value: {value}, Type: {parameter_type}")
+        # parameters = locals()
+        # for name, value in parameters.items():
+        #     parameter_type = type(value).__name__
+        #     print(f"Parameter Name: {name}, Value: {value}, Type: {parameter_type}")
 
 
         initial_info = None
@@ -154,6 +157,10 @@ class Script(scripts.Script):
 
         # Custom seed travel saving
         travel_path = os.path.join(p.outpath_samples, "travels")
+        custom_path = os.path.join(p.outpath_samples, "dreams")
+
+        
+        
         os.makedirs(travel_path, exist_ok=True)
         travel_number = Script.get_next_sequence_number(travel_path)
         travel_path = os.path.join(travel_path, f"{travel_number:05}")
@@ -416,12 +423,12 @@ class Script(scripts.Script):
                     video_fps = int(float(video_fps)) # fix
                     fps = video_fps if video_fps > 0 else len(frames) / abs(video_fps)
 
-                    filename = f"travel-{travel_number:05}-{s:04}.mp4" if compare_paths else f"travel-{travel_number:05}.mp4"
-
-                    writer = imageio.get_writer(os.path.join(travel_path, filename), fps=fps, quality=10)
+                    writer = imageio.get_writer(os.path.join(custom_path, custom_filename), fps=fps, quality=10)
                     for frame in frames:
                         writer.append_data(frame)
                     writer.close()
+
+                    
                 except:
                     print(f"ERROR: Failed generating video")
 
@@ -497,13 +504,13 @@ class Script(scripts.Script):
                     D.append(f"Stats: Skip count: {skip_count} Worst: {skip_ssim_min} No improvment: {not_better} Min. step: {min_step}\n")
                 D.append(f"Frames: {len(step_images)}\n")
 
-                filename = f"seed_travel-info-{travel_number:05}.txt"
-                try:
-                    file = open(os.path.join(travel_path, filename), 'w')
-                    file.writelines(D)
-                    file.close()
-                except Exception as e:
-                    print(f"ERROR: {e}")
+                # filename = f"seed_travel-info-{travel_number:05}.txt"
+                # try:
+                #     file = open(os.path.join(custom_path, filename), 'w')
+                #     file.writelines(D)
+                #     file.close()
+                # except Exception as e:
+                #     print(f"ERROR: {e}")
 
             # RIFE (from https://github.com/vladmandic/rife)
             if rife_passes:
@@ -581,8 +588,8 @@ class Script(scripts.Script):
                 try:
                     frames = [np.asarray(rife_images[0])] * lead_inout + [np.asarray(t) for t in rife_images] + [np.asarray(rife_images[-1])] * lead_inout
                     fps = video_fps if video_fps > 0 else len(frames) / abs(video_fps)
-                    filename = f"travel-rife-{travel_number:05}.mp4"
-                    writer = imageio.get_writer(os.path.join(travel_path, filename), fps=fps, quality=10)
+
+                    writer = imageio.get_writer(os.path.join(custom_path, custom_filename), fps=fps, quality=10)
                     for frame in frames:
                         writer.append_data(frame)
                     writer.close()
