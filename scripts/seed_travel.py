@@ -156,16 +156,16 @@ class Script(scripts.Script):
         dest_seed = re.sub(',,*', ',', dest_seed)
 
         # Custom seed travel saving
-        travel_path = os.path.join(p.outpath_samples, "travels")
-        custom_path = os.path.join(p.outpath_samples, "dreams")
+        # travel_path = os.path.join(p.outpath_samples, "travels")
+        # custom_path = os.path.join(p.outpath_samples, "dreams")
 
         
         
-        os.makedirs(travel_path, exist_ok=True)
-        travel_number = Script.get_next_sequence_number(travel_path)
-        travel_path = os.path.join(travel_path, f"{travel_number:05}")
-        p.outpath_samples = travel_path
-        if save_video: os.makedirs(travel_path, exist_ok=True)
+        # os.makedirs(travel_path, exist_ok=True)
+        # travel_number = Script.get_next_sequence_number(travel_path)
+        # travel_path = os.path.join(travel_path, f"{travel_number:05}")
+        # p.outpath_samples = travel_path
+        # if save_video: os.makedirs(travel_path, exist_ok=True)
 
         # Force Batch Count and Batch Size to 1.
         p.n_iter = 1
@@ -308,9 +308,13 @@ class Script(scripts.Script):
                 if initial_info is None:
                     initial_info = proc.info
 
+                
+
+
                 # upscale - copied from https://github.com/Kahsolt/stable-diffusion-webui-prompt-travel
                 if upscale_meth != 'None' and upscale_ratio != 1.0 and upscale_ratio != 0.0:
                     image = [resize_image(0, proc.images[0], tgt_w, tgt_h, upscaler_name=upscale_meth)]
+                    # (proc.images returns PILs)
                 else:
                     image = [proc.images[0]]
 
@@ -416,21 +420,20 @@ class Script(scripts.Script):
                 print(f"Stats: Skip count: {skip_count} Worst: {skip_ssim_min} No improvment: {not_better} Min. step: {min_step}")
 
             # Save video before continuing with SSIM-stats and RIFE (If things crashes we will atleast have this video)
-            if save_video:
-                try:
-                    frames = [np.asarray(step_images[0])] * lead_inout + [np.asarray(t) for t in step_images] + [np.asarray(step_images[-1])] * lead_inout
+            # if save_video:
+            #     try:
+                    # frames = [np.asarray(step_images[0])] * lead_inout + [np.asarray(t) for t in step_images] + [np.asarray(step_images[-1])] * lead_inout
                     
-                    video_fps = int(float(video_fps)) # fix
-                    fps = video_fps if video_fps > 0 else len(frames) / abs(video_fps)
+                    # video_fps = int(float(video_fps)) # fix
+                    # fps = video_fps if video_fps > 0 else len(frames) / abs(video_fps)
 
-                    writer = imageio.get_writer(os.path.join(custom_path, custom_filename), fps=fps, quality=10)
-                    for frame in frames:
-                        writer.append_data(frame)
-                    writer.close()
-
-                    
-                except:
-                    print(f"ERROR: Failed generating video")
+                    # writer = imageio.get_writer(os.path.join(custom_path, custom_filename), fps=fps, quality=10)
+                    # for frame in frames:
+                    #     writer.append_data(frame)
+                    # writer.close()
+                                    
+                # except:
+                #     print(f"ERROR: Failed generating video")
 
             # SSIM-stats
             if save_stats and ssim_diff > 0:
@@ -585,19 +588,29 @@ class Script(scripts.Script):
                     #    buffer.put(frame)
                     rife_images = buffer
     
-                try:
-                    frames = [np.asarray(rife_images[0])] * lead_inout + [np.asarray(t) for t in rife_images] + [np.asarray(rife_images[-1])] * lead_inout
-                    fps = video_fps if video_fps > 0 else len(frames) / abs(video_fps)
 
-                    writer = imageio.get_writer(os.path.join(custom_path, custom_filename), fps=fps, quality=10)
-                    for frame in frames:
-                        writer.append_data(frame)
-                    writer.close()
-                except:
-                    print(f"ERROR: Failed generating RIFE video")
+                # moved video saving to vision-concentrator.py
+                # try:
+                #     frames = [np.asarray(rife_images[0])] * lead_inout + [np.asarray(t) for t in rife_images] + [np.asarray(rife_images[-1])] * lead_inout
+
+                #     video_fps = int(float(video_fps)) # fix
+                #     fps = video_fps if video_fps > 0 else len(frames) / abs(video_fps)
+
+                #     writer = imageio.get_writer(os.path.join(custom_path, custom_filename), fps=fps, quality=10)
+                #     for frame in frames:
+                #         writer.append_data(frame)
+                #     writer.close()
+                # except:
+                #     print(f"ERROR: Failed generating RIFE video")
             # RIFE end
 
-        return Processed(p, images if show_images else [], p.seed, initial_info)
+       
+        # convert rife_images to PIL images
+        rife_images = [Image.fromarray(np.uint8(img)) for img in rife_images]
+
+        
+        return Processed(p, rife_images, p.seed, initial_info)
+        #return Processed(p, images if show_images else [], p.seed, initial_info)
 
 
     def describe(self):
